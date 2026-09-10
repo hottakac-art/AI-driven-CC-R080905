@@ -23,6 +23,7 @@ body {
   font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   padding: 40px 16px;
 }
 
