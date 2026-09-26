@@ -1,0 +1,67 @@
+name: Deploy entertainment-chat to Cloud Run
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "ch03_MCP_AIbot/entertainment-chat/**"
+      - ".github/workflows/deploy-entertainment-chat.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: ai-chat-509719
+  REGION: asia-northeast1
+  SERVICE_NAME: entertainment-chat
+  REPO_NAME: entertainment-chat
+  WORKDIR: ch03_MCP_AIbot/entertainment-chat
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/63766419466/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-actions-deploy@ai-chat-509719.iam.gserviceaccount.com
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build image
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
+
+      - name: Push image
+        run: |
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          project_id: ${{ env.PROJECT_ID }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          flags: >-
+            --allow-unauthenticated
+            --vpc-connector=ent-chat-vpc
+            --vpc-egress=private-ranges-only
+            --min-instances=0
+            --max-instances=3
+            --memory=512Mi
+          secrets: |
+            ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest
+            DATABASE_URL=DATABASE_URL:latest

@@ -1,0 +1,18 @@
+// use prisma-8
+
+enum MessageRole {
+  @@type("mongo/string@1")
+  User      = "user"
+  Assistant = "assistant"
+}
+
+model Message {
+  id        ObjectId    @id @map("_id")
+  sessionId String
+  role      MessageRole
+  content   String
+  createdAt DateTime
+
+  @@index([sessionId])
+  @@map("messages")
+}
