@@ -18,13 +18,21 @@ import type {
 } from '@prisma/orm-mongo/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'3bc6c0ad1667f4b3a0978c0839bc92d57b9fb3ecd80d299aa128c52175bc034a'>;
+  StorageHashBase<'e6fef17fab5f005dd76eb74888b7ab27e10dcc8707d27175d926d9a10faefc8a'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'251b3ce23f6c9f561892e7c1af9d2cc941a13d64ba1aa7226b90036b09568cc3'>;
 
 export type CodecTypes = MongoCodecTypes;
 
+export type ImageAttachmentOutput = {
+  readonly mediaType: CodecTypes['mongo/string@1']['output'];
+  readonly data: CodecTypes['mongo/string@1']['output'];
+};
+export type ImageAttachmentInput = {
+  readonly mediaType: CodecTypes['mongo/string@1']['input'];
+  readonly data: CodecTypes['mongo/string@1']['input'];
+};
 export type FieldOutputTypes = {
   readonly __unbound__: {
     readonly Message: {
@@ -32,6 +40,7 @@ export type FieldOutputTypes = {
       readonly sessionId: CodecTypes['mongo/string@1']['output'];
       readonly role: 'user' | 'assistant';
       readonly content: CodecTypes['mongo/string@1']['output'];
+      readonly images: ReadonlyArray<ImageAttachmentOutput>;
       readonly createdAt: CodecTypes['mongo/date@1']['output'];
     };
   };
@@ -43,6 +52,7 @@ export type FieldInputTypes = {
       readonly sessionId: CodecTypes['mongo/string@1']['input'];
       readonly role: 'user' | 'assistant';
       readonly content: CodecTypes['mongo/string@1']['input'];
+      readonly images: ReadonlyArray<ImageAttachmentInput>;
       readonly createdAt: CodecTypes['mongo/date@1']['input'];
     };
   };
@@ -54,6 +64,7 @@ export namespace Models {
     sessionId: CodecTypes['mongo/string@1']['output'];
     role: 'user' | 'assistant';
     content: CodecTypes['mongo/string@1']['output'];
+    images: ReadonlyArray<ImageAttachmentOutput>;
     createdAt: CodecTypes['mongo/date@1']['output'];
     readonly [RelationKeys]?: never;
   };
@@ -95,10 +106,29 @@ type ContractBase = Omit<
                       readonly enum: readonly ['user', 'assistant'];
                     };
                     readonly content: { readonly bsonType: 'string' };
+                    readonly images: {
+                      readonly bsonType: 'array';
+                      readonly items: {
+                        readonly bsonType: 'object';
+                        readonly properties: {
+                          readonly mediaType: { readonly bsonType: 'string' };
+                          readonly data: { readonly bsonType: 'string' };
+                        };
+                        readonly additionalProperties: false;
+                        readonly required: readonly ['data', 'mediaType'];
+                      };
+                    };
                     readonly createdAt: { readonly bsonType: 'date' };
                   };
                   readonly additionalProperties: false;
-                  readonly required: readonly ['_id', 'content', 'createdAt', 'role', 'sessionId'];
+                  readonly required: readonly [
+                    '_id',
+                    'content',
+                    'createdAt',
+                    'images',
+                    'role',
+                    'sessionId',
+                  ];
                 };
                 readonly validationLevel: 'strict';
                 readonly validationAction: 'error';
@@ -142,6 +172,11 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
               };
+              readonly images: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'valueObject'; readonly name: 'ImageAttachment' };
+                readonly many: true;
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/date@1' };
@@ -149,6 +184,20 @@ type ContractBase = Omit<
             };
             readonly relations: Record<string, never>;
             readonly storage: { readonly collection: 'messages' };
+          };
+        };
+        readonly valueObjects: {
+          readonly ImageAttachment: {
+            readonly fields: {
+              readonly mediaType: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly data: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+            };
           };
         };
         readonly enum: {
@@ -166,7 +215,20 @@ type ContractBase = Omit<
   readonly capabilities: {};
   readonly extensions: {};
   readonly meta: {};
-
+  readonly valueObjects: {
+    readonly ImageAttachment: {
+      readonly fields: {
+        readonly mediaType: {
+          readonly nullable: false;
+          readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+        };
+        readonly data: {
+          readonly nullable: false;
+          readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+        };
+      };
+    };
+  };
   readonly profileHash: ProfileHash;
 };
 

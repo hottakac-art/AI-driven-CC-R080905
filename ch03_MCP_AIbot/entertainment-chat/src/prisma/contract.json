@@ -51,6 +51,14 @@
                   "kind": "scalar"
                 }
               },
+              "images": {
+                "many": true,
+                "nullable": false,
+                "type": {
+                  "kind": "valueObject",
+                  "name": "ImageAttachment"
+                }
+              },
               "role": {
                 "nullable": false,
                 "type": {
@@ -75,6 +83,26 @@
             "relations": {},
             "storage": {
               "collection": "messages"
+            }
+          }
+        },
+        "valueObjects": {
+          "ImageAttachment": {
+            "fields": {
+              "data": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "mediaType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              }
             }
           }
         }
@@ -113,6 +141,25 @@
                     "createdAt": {
                       "bsonType": "date"
                     },
+                    "images": {
+                      "bsonType": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "bsonType": "object",
+                        "properties": {
+                          "data": {
+                            "bsonType": "string"
+                          },
+                          "mediaType": {
+                            "bsonType": "string"
+                          }
+                        },
+                        "required": [
+                          "data",
+                          "mediaType"
+                        ]
+                      }
+                    },
                     "role": {
                       "bsonType": "string",
                       "enum": [
@@ -128,6 +175,7 @@
                     "_id",
                     "content",
                     "createdAt",
+                    "images",
                     "role",
                     "sessionId"
                   ]
@@ -152,7 +200,7 @@
         "kind": "mongo-database"
       }
     },
-    "storageHash": "3bc6c0ad1667f4b3a0978c0839bc92d57b9fb3ecd80d299aa128c52175bc034a"
+    "storageHash": "e6fef17fab5f005dd76eb74888b7ab27e10dcc8707d27175d926d9a10faefc8a"
   },
   "capabilities": {},
   "extensions": {},

@@ -6,11 +6,17 @@ enum MessageRole {
   Assistant = "assistant"
 }
 
+type ImageAttachment {
+  mediaType String
+  data      String
+}
+
 model Message {
-  id        ObjectId    @id @map("_id")
+  id        ObjectId          @id @map("_id")
   sessionId String
   role      MessageRole
   content   String
+  images    ImageAttachment[]
   createdAt DateTime
 
   @@index([sessionId])

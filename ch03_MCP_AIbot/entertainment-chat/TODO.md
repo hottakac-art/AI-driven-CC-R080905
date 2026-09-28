@@ -93,7 +93,7 @@
 
 - [ ] **AI応答生成後のDB書き込み失敗で正常な応答が握りつぶされる**: `app/api/[[...route]]/route.ts`の`/chat`ハンドラーは`chatAgent.generate()`成功後に`appendMessage(sessionId, "assistant", reply)`を呼び、これが失敗(一時的なMongo書き込みエラー等)するとcatchブロックに落ち、既に生成・課金済みの`reply`を返さずエラーメッセージだけをユーザーに返してしまう。アシスタント発言の永続化失敗時もレスポンスとしては`reply`を返す(永続化失敗はログのみに留める)よう修正を検討する。
 - [ ] **レート制限・乱用対策が皆無**: 「認証不要」「不特定多数の一般ユーザー」「予算・API利用料金の制限なし」という要件の組み合わせは、悪意あるユーザーによる連投・自動化された大量リクエストに対して無防備であることを意味する。IPベースのレート制限やCloud Armor等、最低限の乱用対策の要否を検討する。
-- [ ] **メッセージ本文の長さ上限が未設定**: クライアント(`<input>`にmaxLengthなし)・サーバー(`/chat`ハンドラーに長さバリデーションなし)の両方で、1メッセージあたりの文字数上限が存在しない。極端に長い入力によるコスト増大・MongoDBドキュメントサイズ・Claudeのコンテキスト長への影響を考慮し、妥当な上限を設定する。
+- [x] **メッセージ本文の長さ上限が未設定** — 対応済み(2026-09-28): クライアント(`<input maxLength>`)・サーバー(`MAX_MESSAGE_LENGTH = 4000`、`route.ts`)の両方に上限を追加。画像添付機能(Issue #1)実装時にあわせて対応。
 - [ ] **`max_tokens`(最大出力トークン数)が明示的に指定されていない**: `lib/mastra/agent.ts`のAgent定義にも、`route.ts`の`chatAgent.generate(conversation)`呼び出しにも生成オプションが一切渡されておらず、Mastra/AI SDK側の既定値に依存している。想定外の短い/長い応答や、将来のデフォルト値変更に影響されないよう明示的に設定する。
 - [ ] **`providerOptions.anthropic.effort: "high"`が実際にAnthropic APIへ届いているか未検証**: この設定はOpenAIの`reasoningEffort`パターンからの類推で実装したものであり、Mastra公式ドキュメントで`effort`キーがAnthropic用providerOptionsとして明示的にサポートされていることを確認できていない。有効な`ANTHROPIC_API_KEY`が用意でき次第、実際のリクエストログ(Anthropic Consoleの使用量ログ等)で`output_config.effort`が意図通り反映されているか確認する。反映されていない場合は代替手段を検討する。
 

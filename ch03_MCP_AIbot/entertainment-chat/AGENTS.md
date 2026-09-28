@@ -48,16 +48,24 @@ Webアプリケーション(ブラウザからアクセス)。
 
 ## 機能要件
 
-- **必須機能**: AIとの対話(チャット)機能のみ。
+- **必須機能**: AIとの対話(チャット)機能。テキストに加え、画像添付によるマルチモーダル入力に対応(`claude-sonnet-5`のVision機能を利用)。
 - ユーザー認証: 不要。
 - 多言語対応: 不要。
+
+## 画像添付(マルチモーダル)
+
+- 1メッセージにつき最大3枚、1枚あたり4MB(base64化前サイズ換算)まで。対応形式は png/jpeg/webp/gif。
+- 制限値は`app/api/[[...route]]/route.ts`(サーバー側の最終防御)と`components/ChatApp.tsx`(クライアント側の即時フィードバック)の両方に定義している。変更する際は両方を揃えること。
+- メッセージ本文にも上限を設定済み(`MAX_MESSAGE_LENGTH = 4000`文字、`route.ts`)。
+- Claude APIへは`@mastra/core/llm`の`CoreMessage`が持つ`UserContent`形式(`{ type: 'text' | 'image', ... }`の配列)で渡す。assistant側の発言は常にテキストのみ(画像を生成しないため)。
 
 ## データ永続化
 
 - 会話履歴は**セッション中のみ**保持する。ブラウザの`sessionStorage`でセッションID(UUID)を発行し、タブ/ブラウザを閉じると履歴は失われる想定。
-- MongoDB(Prisma `orm-mongo`経由)には`Message`コレクション(`sessionId`・`role`・`content`・`createdAt`)として保存するが、これはHono APIがステートレスにリクエストを処理するための一時的な会話コンテキスト保持が目的であり、長期保存・分析目的の永続化ではない。
+- MongoDB(Prisma `orm-mongo`経由)には`Message`コレクション(`sessionId`・`role`・`content`・`images`(`ImageAttachment[]`複合型: `mediaType`・`data`)・`createdAt`)として保存するが、これはHono APIがステートレスにリクエストを処理するための一時的な会話コンテキスト保持が目的であり、長期保存・分析目的の永続化ではない。画像もbase64のまま同一ドキュメントに保存する(外部ストレージ連携は行っていない)。
 - 1会話セッションあたりのメッセージ数に上限は設けない。
 - 運用上の補足: セッション終了後のドキュメントは自動削除されない(明示的なクリーンアップは未実装)。長期間放置されたデータを残したくない場合は、MongoDB側でTTLインデックス(例: `createdAt`に対し`expireAfterSeconds`)を運用者が別途設定することを想定。
+- スキーマ変更時の注意: `messages`コレクションに既存データがある状態で`Message`モデルへ必須フィールドを追加すると、`prisma db init`はMongoDBのバリデータ更新を「destructive」と判断し失敗する(additive操作のみ許可のため)。ローカル開発ではコレクションをdropしてから`db init`し直す運用としている(本番はまだ運用データが無いため未検証。将来同様の変更をする際は移行方針を検討すること)。
 
 ## 環境変数
 
